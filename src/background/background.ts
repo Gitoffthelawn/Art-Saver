@@ -678,8 +678,8 @@ async function sendDBUpdate(site: Site) {
         action: 'content_db_update',
         site,
     } as ContentMessage);
-    browser.runtime.sendMessage({ action: 'options_db_update', site } as OptionsMessage);
-    browser.runtime.sendMessage({ action: 'popup_db_update', site } as PopupMessage);
+    browser.runtime.sendMessage({ action: 'options_db_update', site } as OptionsMessage).catch(() => {});;
+    browser.runtime.sendMessage({ action: 'popup_db_update', site } as PopupMessage).catch(() => {});;
 }
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

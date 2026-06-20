@@ -583,11 +583,13 @@ function sanitizePathComponent(text: string) {
         .replaceAll(':', '：') // \uff1a
         .replaceAll('*', '＊') // \uff0a
         .replaceAll('?', '？') // \uff1f
-        .replaceAll('"', '″') // \u2033
+        .replaceAll('"', '＂') // \uff02
         .replaceAll('<', '＜') // \uff1c
         .replaceAll('>', '＞') // \uff1e
         .replaceAll('|', '｜') // \uff5c
-        .replace(/[\u200b-\u200f\u202a-\u202e]/g, ''); // remove zero width and bidirectional formatting characters.
+        .replaceAll('%', '％') // \uff05 // firefox automatically sets '%' to '_'
+        .replaceAll(/[\u00a0\u202f]/g, ' ') // no-break space, narrow NBSP
+        .replace(/[\u00ad\u200b-\u200f\u202a-\u202e\u2060\ufeff]/g, ''); // remove zero width and bidirectional formatting characters.
     // not illegal in windows but firefox errors when trying to download a filename with them.
 }
 
