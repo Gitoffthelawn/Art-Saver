@@ -18,9 +18,10 @@ var getPageInfo = async () => {
         has_user = true;
         user = path_components[0];
     } else {
-        const user_element =
-            document.querySelector('[role="dialog"] header span a[href^="/"] span') ?? // dialog user
-            document.querySelector<HTMLElement>('a[href="#"] > h2 > span'); // user homepage
+        const user_element = selectFirst(document, [
+            '[role="dialog"] header span a[href^="/"] span', // dialog user
+            'a[href="#"] > h2 > span', // user homepage
+        ]);
         if (user_element) {
             has_user = true;
             user = user_element.textContent.trim();
@@ -198,11 +199,11 @@ function checkInstagramArticle(element: HTMLElement) {
 // main page post
 function checkInstagramPost(element: HTMLElement) {
     const href_sel = ':is(a[href*="/p/"], a[href*="/reel/"])';
-    const a =
-        element.querySelector<HTMLAnchorElement>(`section + div:last-child ${href_sel}`) ?? // full page post
-        element.querySelector<HTMLAnchorElement>(`section + div + div:last-child ${href_sel}`) ?? // vertical dialog post
-        element.querySelector<HTMLAnchorElement>(`div:has(+ section) ${href_sel}`); // full dialog post
-    const href = a?.getAttribute('href');
+    const href = selectFirst(element, [
+        `section + div:last-child ${href_sel}`, // full page post
+        `section + div + div:last-child ${href_sel}`, // vertical dialog post
+        `div:has(+ section) ${href_sel}`, // full dialog post
+    ])?.getAttribute('href');
     if (!href) {
         G_check_log.log(element, 'Link not found');
         return;

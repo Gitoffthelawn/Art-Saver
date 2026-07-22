@@ -843,3 +843,14 @@ async function urlToDataUrl(url: string) {
         reader.readAsDataURL(response.body);
     });
 }
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+function selectFirst(element: HTMLElement | Document, selectors: string[]) {
+    for (const selector of selectors) {
+        const found_element = element.querySelector<HTMLElement>(selector);
+        if (found_element) {
+            return found_element;
+        }
+    }
+}

@@ -140,8 +140,7 @@ async function checkBluesky() {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 function checkBlueskyPage() {
-    const media_selector =
-        '[data-expoimage], [aria-label="Embedded video player"], video[src^="https://t.gifs.bsky.app/"]';
+    const media_selector = 'button [data-expoimage], [aria-label="Embedded video player"], video[autoplay][loop]';
     for (const item of document.querySelectorAll<HTMLElement>(
         'div[role="link"][tabindex="0"], [data-testid^="postThreadItem"]',
     )) {
@@ -160,23 +159,43 @@ function checkBlueskyPage() {
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-function checkBlueskyThumbnail(element: HTMLElement) {
-    const media_box =
-        // single image and video
-        element.querySelector<HTMLElement>(':scope :is(div, button)[style^="width: 100%;"]') ??
-        // media grid
-        element.querySelector<HTMLElement>(
-            ':scope div[style*="margin-top: 8px;"] > div:not([style]) > div[style*="gap: 4px;"]',
-        ) ??
-        // gif
-        element.querySelector<HTMLElement>(
-            ':scope div:not([style]) > div[style*="margin-top: 8px;"] > div[style*="width: 100%;"]',
-        );
+function divPath(...nths: number[]) {
+    const path = nths
+        .map((n) => {
+            if (n < 0) {
+                return `> div:nth-last-of-type(${Math.abs(n)})`;
+            } else if (n === 0) {
+                return '> div:only-child';
+            } else {
+                return `> div:nth-of-type(${n})`;
+            }
+        })
+        .join(' ');
+    return `:scope ${path}`;
+}
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+function checkBlueskyThumbnail(element: HTMLElement) {
+    const media_box = selectFirst(element, [
+        // full post media, focused comment media
+        divPath(2, 1, -1, 0, 0),
+        divPath(2, 1, -1, 0, 1, 0),
+        // comment media
+        divPath(2, 2, -2, 0, 0),
+        divPath(2, 2, -2, 0, 1, 0),
+        // thread media
+        divPath(0, 3, 2, -2, -1, 0, 0),
+        divPath(0, 3, 2, -2, -1, 0, 1, 0),
+        // saved thread media
+        divPath(2, 2, 2, -1, 0, 0),
+        divPath(2, 2, 2, -1, 0, 1, 0),
+    ]);
     if (!media_box) {
         G_check_log.log(element, 'Post media not found');
         return;
     }
+
     const user =
         element.getAttribute('data-testid')?.split('-by-', 2)[1] ??
         // quote post
@@ -187,6 +206,7 @@ function checkBlueskyThumbnail(element: HTMLElement) {
         G_check_log.log(element, 'User not found');
         return;
     }
+
     let link: string | undefined;
     // Follow button next to main post selector
     if (element.querySelector('button[data-testid="followBtn"]')) {
@@ -198,6 +218,7 @@ function checkBlueskyThumbnail(element: HTMLElement) {
         G_check_log.log(element, 'Link not found');
         return;
     }
+
     const regex_result = /\/post\/([2-7a-z]+)/.exec(link);
     if (!regex_result) {
         G_check_log.log(element, 'Link does not match RegExp');
@@ -332,6 +353,11 @@ function getBlueskyFileDatas(obj: any) {
     if ('video' in media) {
         addMedia(media.video);
     }
+    if ('items' in media) {
+        for (const item of media.items) {
+            addMedia(item.image);
+        }
+    }
     if ('external' in media) {
         const uri = media.external.uri;
 
@@ -351,6 +377,9 @@ function getBlueskyFileDatas(obj: any) {
         file_datas.push({ info, meta });
     }
 
+    if (!file_datas) {
+        throw new Error('Post file data not found');
+    }
     return file_datas;
 }
 

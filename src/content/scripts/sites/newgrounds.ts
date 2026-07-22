@@ -219,10 +219,11 @@ function newgroundsUrlToSubmission(url: string) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 function checkNewgroundsSubmissionPage(url: string, user: User) {
-    const content =
-        document.querySelector<HTMLElement>('[itemscope] > .pod-body > .image') ??
-        document.querySelector<HTMLElement>('#embed_podcontent') ??
-        document.querySelector<HTMLElement>('#ng-global-video-player[style]');
+    const content = selectFirst(document, [
+        '[itemscope] > .pod-body > .image',
+        '#embed_podcontent',
+        '#ng-global-video-player[style]',
+    ]);
     if (!content) {
         G_check_log.log('Submission page:', 'Media element not found');
         return;
