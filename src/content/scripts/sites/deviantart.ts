@@ -558,22 +558,34 @@ async function getMediaUrl(
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 function buildMediaUrl(media_obj: any) {
-    // usually:
-    // type.c = image
-    // type.s = swf // no longer supported?
-    // type.b = mp4, gif
-    const types = media_obj.types;
+    type MediaType = {
+        t: string; // media type
+        h: number; // height
+        w: number; // width
+        f?: number; // file size
+        c?: string; // image realtive path
+        s?: string; // swf full url // no longer supported ?
+        b?: string; // mp4, gif full url
+    };
+
+    let types = media_obj.types as MediaType[];
+
+    // prioritize videos if they exist
+    const videos = types.filter((t) => t.t === 'video');
+    if (videos.length > 0) {
+        types = videos;
+    }
     // sort by resolution
-    const compare_value = (t: any) => t.w * t.h + (t.t === 'fullview' ? 1 : 0);
-    types.sort((a: any, b: any) => compare_value(b) - compare_value(a));
+    const compare_value = (t: MediaType) => t.w * t.h + (t.t === 'fullview' ? 1 : 0);
+    types.sort((a, b) => compare_value(b) - compare_value(a));
     // sort by file size
     // it is possible for no types to have a file size
     // this assumes a larger file size is a better quality file
-    types.sort((a: any, b: any) => (b.f ?? 0) - (a.f ?? 0));
+    types.sort((a, b) => (b.f ?? 0) - (a.f ?? 0));
     const media = types[0];
 
-    const uri = media_obj.baseUri;
-    let media_url: string = media.t === 'fullview' ? (media.c ? `${uri}${media.c}` : uri) : (media.s ?? media.b);
+    const uri: string = media_obj.baseUri;
+    let media_url = media.t === 'fullview' ? (media.c ? `${uri}${media.c}` : uri) : (media.s ?? media.b);
     if (!media_url) {
         throw new Error('Unable to find download URL');
     }
